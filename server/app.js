@@ -1,7 +1,5 @@
 require('dotenv').config();
-const path = require('path')
 const Koa = require('koa')
-const koaStatic = require('koa-static')
 const bodyParser = require('koa-bodyparser')
 const koaLogger = require('koa-logger')
 
@@ -25,11 +23,6 @@ app.use(koaLogger())
 
 // 配置ctx.body解析中间件
 app.use(bodyParser())
-
-// 配置静态资源加载中间件
-app.use(koaStatic(
-  path.join(__dirname , './../static')
-))
 
 // 统一响应格式中间件
 app.use(Middleware.responseFormatter)
