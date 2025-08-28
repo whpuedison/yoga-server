@@ -4,8 +4,14 @@
 const mysql = require('mysql')
 const config = require('../../config')
 
-// 数据库连接池
-const pool = mysql.createPool(config.database)
+// 数据库连接池 - 映射配置字段名
+const pool = mysql.createPool({
+  host: config.database.HOST,
+  user: config.database.USERNAME,
+  password: config.database.PASSWORD,
+  database: config.database.DATABASE,
+  port: config.database.PORT
+})
 
 /**
  * 基础查询函数

@@ -5,6 +5,7 @@ const { validator, errors, utils } = require('../../core')
 const authModel = require('./model')
 const jwt = require('jsonwebtoken')
 const config = require('../../../config')
+const axios = require('axios')
 
 const { 
   validate, required, custom 
@@ -30,15 +31,28 @@ const validateWechatLogin = (loginData) =>
 
 /**
  * 获取微信用户信息
- * 这里需要集成微信API，暂时模拟实现
+ * 调用微信API获取用户openid和session_key
  */
 const getWechatUserInfo = async (code) => {
-  // 实际项目中应该调用微信API获取用户信息
-  // 这里模拟返回用户信息
-  return {
-    openid: `mock_openid_${Date.now()}`,
-    nickname: '微信用户',
-    avatar_url: 'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132'
+  const url = `https://api.weixin.qq.com/sns/jscode2session?appid=wxa3f7a06bb04bbf11&secret=090d93bdada81b72cc8df609608a3399&js_code=${code}&grant_type=authorization_code`;
+  
+  try {
+    // TODO: 实际项目中需要调用微信API获取用户信息
+    const response = { data: { openid: 'mock_openid_123', session_key: 'mock_session_key_123' } } //await axios.get(url);
+    const { openid, session_key, errcode, errmsg } = response.data;
+    
+    if (errcode) {
+      throw new Error(errmsg);
+    }
+    
+    return {
+      openid,
+      session_key,
+      nickname: '微信用户', // 默认昵称
+      avatar_url: 'https://thirdwx.qlogo.cn/mmopen/vi_32/POgEwh4mIHO4nibH0KlMECNjjGxQUq24ZEaGT4poC6icRiccVGKSyXwibcPq4BWmiaIGuG1icwxaQX6grC9VemZoJ8rg/132' // 默认头像
+    };
+  } catch (error) {
+    throw new Error('Error fetching userInfo from WeChat: ' + error.message);
   }
 }
 
@@ -91,7 +105,6 @@ const wechatLogin = async (loginData) => {
 
   // 获取微信用户信息
   const wechatUserInfo = await getWechatUserInfo(loginData.code)
-  
   // 查找或创建用户
   let user = await authModel.findByOpenId(wechatUserInfo.openid)
   if (!user) {

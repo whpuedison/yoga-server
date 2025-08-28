@@ -11,12 +11,12 @@ const courseRouter = require('../modules/course').router
 const bookingRouter = require('../modules/booking').router
 const memberCardRouter = require('../modules/member-card').router
 
-// API路由
-router.use('/api/user', userRouter.routes(), userRouter.allowedMethods())
-router.use('/api/auth', authRouter.routes(), authRouter.allowedMethods())
-router.use('/api/courses', courseRouter.routes(), courseRouter.allowedMethods())
-router.use('/api/bookings', bookingRouter.routes(), bookingRouter.allowedMethods())
-router.use('/api/member-cards', memberCardRouter.routes(), memberCardRouter.allowedMethods())
+// API路由 (v1版本)
+router.use('/api/v1/user', userRouter.routes(), userRouter.allowedMethods())
+router.use('/api/v1/auth', authRouter.routes(), authRouter.allowedMethods())
+router.use('/api/v1/courses', courseRouter.routes(), courseRouter.allowedMethods())
+router.use('/api/v1/bookings', bookingRouter.routes(), bookingRouter.allowedMethods())
+router.use('/api/v1/member-cards', memberCardRouter.routes(), memberCardRouter.allowedMethods())
 
 // 健康检查接口
 router.get('/health', async (ctx) => {
