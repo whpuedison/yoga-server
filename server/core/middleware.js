@@ -1,6 +1,8 @@
 /**
  * 全局中间件
  */
+const jwt = require('jsonwebtoken')
+const config = require('../../config')
 const { response } = require('./response')
 
 /**
@@ -78,9 +80,47 @@ const responseFormatter = async (ctx, next) => {
   ctx.body = response.success(ctx.body)
 }
 
+/**
+ * JWT认证中间件
+ */
+const jwtAuth = (type = 'mini-program') => {
+  return async (ctx, next) => {
+    const token = ctx.headers.authorization
+    if (!token || !token.startsWith('Bearer ')) {
+      ctx.throw(401, '缺少认证令牌')
+    }
+
+    try {
+      const actualToken = token.replace('Bearer ', '')
+      const decoded = jwt.verify(actualToken, config.jwtSecret)
+      
+      // 检查token类型是否匹配
+      if (decoded.type !== type) {
+        ctx.throw(403, '令牌类型不匹配')
+      }
+      
+      // 将用户信息添加到ctx.state
+      ctx.state.userId = decoded.userId
+      ctx.state.tenantId = decoded.tenantId
+      ctx.state.openid = decoded.openid
+      
+      await next()
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        ctx.throw(401, '令牌已过期')
+      } else if (error.name === 'JsonWebTokenError') {
+        ctx.throw(401, '无效令牌')
+      } else {
+        ctx.throw(401, '认证失败')
+      }
+    }
+  }
+}
+
 module.exports = {
   errorHandler,
   cors,
   requestLogger,
-  responseFormatter
+  responseFormatter,
+  jwtAuth
 }

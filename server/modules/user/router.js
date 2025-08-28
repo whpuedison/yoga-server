@@ -1,123 +1,51 @@
 /**
- * 函数式用户路由
+ * 小程序用户路由 - 专为小程序端用户相关接口
  */
 const router = require('koa-router')()
-const { response, errors } = require('../../core')
-const userService = require('./service')
+const { response, errors, Middleware } = require('../../core')
+const authService = require('../auth/service')
+const bookingService = require('../booking/service')
+const memberCardService = require('../member-card/service')
 
-const { handle, success } = response
+const { handle, success, page } = response
 const { AuthError } = errors
-
-/**
- * 获取用户ID的工具函数
- */
-const getUserId = (ctx) => {
-  const userId = ctx.session?.userId || ctx.state.userId
-  if (!userId) {
-    throw AuthError('请先登录')
-  }
-  return userId
-}
-
-/**
- * 用户注册
- * POST /api/user/register
- */
-router.post('/register', handle(async (ctx) => {
-  const userData = ctx.request.body
-  const result = await userService.register(userData)
-  return success(result, '注册成功')
-}))
-
-/**
- * 用户登录
- * POST /api/user/login
- */
-router.post('/login', handle(async (ctx) => {
-  const loginData = ctx.request.body
-  const result = await userService.login(loginData)
-  
-  // 设置session
-  if (ctx.session) {
-    ctx.session.userId = result.id
-    ctx.session.username = result.username
-  }
-  
-  return success(result, '登录成功')
-}))
-
-/**
- * 用户登出
- * POST /api/user/logout
- */
-router.post('/logout', handle(async (ctx) => {
-  // 清除session
-  if (ctx.session) {
-    ctx.session = null
-  }
-  
-  return success(null, '登出成功')
-}))
+const jwtAuth = Middleware.jwtAuth('mini-program')
 
 /**
  * 获取当前用户信息
- * GET /api/user/profile
+ * GET /api/users/me
  */
-router.get('/profile', handle(async (ctx) => {
-  const userId = getUserId(ctx)
-  const result = await userService.getUserInfo(userId)
+router.get('/me', jwtAuth, handle(async (ctx) => {
+  const userId = ctx.state.userId
+  const result = await authService.getCurrentUser(userId)
   return success(result)
 }))
 
 /**
- * 更新用户信息
- * PUT /api/user/profile
+ * 获取我的预约记录
+ * GET /api/users/me/bookings
  */
-router.put('/profile', handle(async (ctx) => {
-  const userId = getUserId(ctx)
-  const updateData = ctx.request.body
-  const result = await userService.updateUser(userId, updateData)
-  return success(result, '更新成功')
-}))
-
-/**
- * 修改密码
- * PUT /api/user/password
- */
-router.put('/password', handle(async (ctx) => {
-  const userId = getUserId(ctx)
-  const passwordData = ctx.request.body
-  await userService.changePassword(userId, passwordData)
-  return success(null, '密码修改成功')
-}))
-
-/**
- * 用户列表（管理员接口）
- * GET /api/user/list
- */
-router.get('/list', handle(async (ctx) => {
-  // TODO: 添加管理员权限检查
-  
+router.get('/me/bookings', jwtAuth, handle(async (ctx) => {
+  const userId = ctx.state.userId
   const options = {
+    status: ctx.query.status,
     page: ctx.query.page,
     size: ctx.query.size,
-    keyword: ctx.query.keyword,
-    status: ctx.query.status
+    start_date: ctx.query.start_date,
+    end_date: ctx.query.end_date
   }
-  
-  const result = await userService.getUserList(options)
-  return response.page(result.list, result.total, result.page, result.size)
+  const result = await bookingService.getUserBookings(userId, options)
+  return page(result.list, result.total, result.page, result.size)
 }))
 
 /**
- * 根据ID获取用户信息（管理员接口）
- * GET /api/user/:id
+ * 获取我的会员卡
+ * GET /api/users/me/member-cards
  */
-router.get('/:id', handle(async (ctx) => {
-  // TODO: 添加管理员权限检查
-  
-  const userId = ctx.params.id
-  const result = await userService.getUserInfo(userId)
+router.get('/me/member-cards', jwtAuth, handle(async (ctx) => {
+  const userId = ctx.state.userId
+  const tenantId = ctx.state.tenantId
+  const result = await memberCardService.getUserMemberCards(userId, tenantId)
   return success(result)
 }))
 
