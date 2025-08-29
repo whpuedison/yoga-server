@@ -1,5 +1,5 @@
 /**
- * 函数式课程路由
+ * 课程管理端路由
  */
 const router = require('koa-router')()
 const { response, errors, Middleware } = require('../../core')
@@ -9,49 +9,13 @@ const { handle, success, page } = response
 const { AuthError, BusinessError } = errors
 
 /**
- * JWT认证中间件 - 用于小程序端认证
- */
-const jwtAuth = Middleware.jwtAuth('mini-program')
-
-/**
  * 管理员认证中间件 - 用于管理端认证
  */
 const adminAuth = Middleware.jwtAuth('admin')
 
 /**
- * 获取课程列表（小程序端）
- * GET /api/courses
- */
-router.get('/', jwtAuth, handle(async (ctx) => {
-  const tenantId = ctx.state.tenantId
-  const { date, page: pageNum, size } = ctx.query
-  
-  let courses
-  if (date) {
-    // 根据日期获取课程
-    courses = await courseService.getCoursesByDate(tenantId, date)
-  } else {
-    // 获取今日课程
-    courses = await courseService.getTodayCourses(tenantId)
-  }
-  
-  return success(courses)
-}))
-
-/**
- * 获取课程详情（小程序端）
- * GET /api/courses/:id
- */
-router.get('/:id', jwtAuth, handle(async (ctx) => {
-  const tenantId = ctx.state.tenantId
-  const courseId = ctx.params.id
-  const result = await courseService.getCourseDetail(courseId, tenantId)
-  return success(result)
-}))
-
-/**
  * 获取课程列表（管理端）
- * GET /api/admin/courses
+ * GET /api/v1/admin/courses
  */
 router.get('/', adminAuth, handle(async (ctx) => {
   const tenantId = ctx.state.tenantId
@@ -71,10 +35,9 @@ router.get('/', adminAuth, handle(async (ctx) => {
 
 /**
  * 创建课程（管理端）
- * POST /api/admin/courses
+ * POST /api/v1/admin/courses
  */
 router.post('/', adminAuth, handle(async (ctx) => {
-  console.log('到这了没')
   const tenantId = ctx.state.tenantId
   const courseData = ctx.request.body
   const result = await courseService.createCourse(tenantId, courseData)
@@ -83,7 +46,7 @@ router.post('/', adminAuth, handle(async (ctx) => {
 
 /**
  * 获取课程详情（管理端）
- * GET /api/admin/courses/:id
+ * GET /api/v1/admin/courses/:id
  */
 router.get('/:id', adminAuth, handle(async (ctx) => {
   const tenantId = ctx.state.tenantId
@@ -94,7 +57,7 @@ router.get('/:id', adminAuth, handle(async (ctx) => {
 
 /**
  * 更新课程（管理端）
- * PUT /api/admin/courses/:id
+ * PUT /api/v1/admin/courses/:id
  */
 router.put('/:id', adminAuth, handle(async (ctx) => {
   const tenantId = ctx.state.tenantId
@@ -106,7 +69,7 @@ router.put('/:id', adminAuth, handle(async (ctx) => {
 
 /**
  * 删除课程（管理端）
- * DELETE /api/admin/courses/:id
+ * DELETE /api/v1/admin/courses/:id
  */
 router.delete('/:id', adminAuth, handle(async (ctx) => {
   const tenantId = ctx.state.tenantId

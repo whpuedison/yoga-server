@@ -26,8 +26,10 @@ const validateCourseCreate = (courseData) =>
     courseData,
     required('title', '课程标题不能为空'),
     length('title', 1, 255, '课程标题长度应在1-255字符之间'),
-    required('teacher', '老师姓名不能为空'),
+    required('teacher_id', '老师ID不能为空'),
     required('schedule_time', '课程时间不能为空'),
+    required('duration', '课程时长不能为空'),
+    custom('duration', (value) => value > 0, '课程时长必须大于0'),
     required('capacity', '课程容量不能为空'),
     custom('capacity', (value) => value > 0, '课程容量必须大于0')
   )
@@ -36,16 +38,18 @@ const validateCourseUpdate = (updateData) =>
   validate(
     updateData,
     updateData.title ? length('title', 1, 255, '课程标题长度应在1-255字符之间') : (data) => data,
+    updateData.duration ? custom('duration', (value) => value > 0, '课程时长必须大于0') : (data) => data,
     updateData.capacity ? custom('capacity', (value) => value > 0, '课程容量必须大于0') : (data) => data
   )
 
 /**
- * 格式化课程信息
+ * 格式化课程信息（包含老师信息和时长）
  */
 const formatCourseInfo = (course) => ({
   id: course.id,
   title: course.title,
-  teacher: course.teacher,
+  teacher_id: course.teacher_id,
+  teacher_name: course.teacher_name, // 需要JOIN查询获取
   schedule_time: course.schedule_time,
   duration: course.duration,
   capacity: course.capacity,
@@ -59,21 +63,20 @@ const formatCourseInfo = (course) => ({
 })
 
 /**
- * 检查课程时间冲突
+ * 检查老师课程时间冲突（按老师ID检测，使用实际课程时长）
  */
-const checkTimeConflict = async (tenantId, scheduleTime, duration, excludeId = null) => {
-  const startTime = new Date(scheduleTime)
-  const endTime = new Date(startTime.getTime() + (duration || 60) * 60000)
+const checkTimeConflict = async (teacherId, scheduleTime, duration, excludeId = null) => {
+  const courseTime = new Date(scheduleTime)
+  const endTime = new Date(courseTime.getTime() + duration * 60000)
   
+  // 使用标准时间重叠检测逻辑，比较新课程时间与现有课程时间
   let sql = `
     SELECT * FROM courses 
-    WHERE tenant_id = ? AND (
-      (schedule_time <= ? AND DATE_ADD(schedule_time, INTERVAL duration MINUTE) >= ?) OR
-      (schedule_time <= ? AND DATE_ADD(schedule_time, INTERVAL duration MINUTE) >= ?) OR
-      (schedule_time >= ? AND schedule_time <= ?)
-    )
+    WHERE teacher_id = ? 
+    AND schedule_time < ? 
+    AND DATE_ADD(schedule_time, INTERVAL duration MINUTE) > ?
   `
-  const params = [tenantId, startTime, startTime, endTime, endTime, startTime, endTime]
+  const params = [teacherId, endTime, courseTime]
   
   if (excludeId) {
     sql += ' AND id != ?'
@@ -132,15 +135,15 @@ const createCourse = async (tenantId, courseData) => {
   // 数据验证
   validateCourseCreate(courseData)
   
-  // 检查时间冲突
+  // 检查老师时间冲突
   const hasConflict = await checkTimeConflict(
-    tenantId, 
-    courseData.schedule_time, 
-    courseData.duration || 60
+    courseData.teacher_id, 
+    courseData.schedule_time,
+    courseData.duration
   )
   
   if (hasConflict) {
-    throw BusinessError('该时间段已有其他课程安排')
+    throw BusinessError('该老师在该时间段已有其他课程安排')
   }
   
   // 创建课程数据
@@ -175,17 +178,23 @@ const updateCourse = async (courseId, tenantId, updateData) => {
     throw BusinessError('课程不存在')
   }
   
-  // 如果更新时间，检查时间冲突
-  if (updateData.schedule_time) {
+  // 如果更新时间或时长，检查老师时间冲突
+  if (updateData.schedule_time || updateData.duration) {
+    // 使用更新后的老师ID或现有课程的老师ID
+    const teacherId = updateData.teacher_id || course.teacher_id
+    // 使用更新后的时长或现有课程的时长
+    const duration = updateData.duration || course.duration
+    const scheduleTime = updateData.schedule_time || course.schedule_time
+    
     const hasConflict = await checkTimeConflict(
-      tenantId, 
-      updateData.schedule_time, 
-      updateData.duration || course.duration,
+      teacherId, 
+      scheduleTime,
+      duration,
       courseId
     )
     
     if (hasConflict) {
-      throw BusinessError('该时间段已有其他课程安排')
+      throw BusinessError('该老师在该时间段已有其他课程安排')
     }
   }
   

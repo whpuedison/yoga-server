@@ -8,7 +8,9 @@ const router = require('koa-router')()
 const userRouter = require('../modules/user').router
 const userMiniRouter = require('../modules/user/mini-router')
 const authRouter = require('../modules/auth').router
-const courseRouter = require('../modules/course').router
+const courseMiniRouter = require('../modules/course').miniRouter
+const courseAdminRouter = require('../modules/course').adminRouter
+const teacherRouter = require('../modules/teacher').router
 const bookingRouter = require('../modules/booking').router
 const memberCardRouter = require('../modules/member-card').router
 const adminAuthRouter = require('../modules/admin-auth').router
@@ -19,10 +21,12 @@ router.use('/api/v1/user', userRouter.routes(), userRouter.allowedMethods())
 router.use('/api/v1/users', userMiniRouter.routes(), userMiniRouter.allowedMethods())
 router.use('/api/v1/auth', authRouter.routes(), authRouter.allowedMethods())
 router.use('/api/v1/admin/auth', adminAuthRouter.routes(), adminAuthRouter.allowedMethods())
-router.use('/api/v1/courses', courseRouter.routes(), courseRouter.allowedMethods())
+router.use('/api/v1/courses', courseMiniRouter.routes(), courseMiniRouter.allowedMethods())
 router.use('/api/v1/bookings', bookingRouter.routes(), bookingRouter.allowedMethods())
 router.use('/api/v1/member-cards', memberCardRouter.routes(), memberCardRouter.allowedMethods())
 router.use('/api/v1/admin/member-card-templates', memberCardTemplateRouter.routes(), memberCardTemplateRouter.allowedMethods())
+router.use('/api/v1/admin/courses', courseAdminRouter.routes(), courseAdminRouter.allowedMethods())
+router.use('/api/v1/admin/teachers', teacherRouter.routes(), teacherRouter.allowedMethods())
 
 // 健康检查接口
 router.get('/health', async (ctx) => {

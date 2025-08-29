@@ -38,20 +38,42 @@ CREATE TABLE `user_tenant_relations` (
   CONSTRAINT `fk_user_tenant_relation_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户-租户关联表';
 
--- 4. 课程表 (courses)
+-- 4. 老师表 (teachers)
+CREATE TABLE `teachers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tenant_id` int(11) NOT NULL COMMENT '所属租户',
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '老师姓名',
+  `phone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '联系电话',
+  `specialty` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '擅长领域',
+  `description` text COLLATE utf8mb4_unicode_ci COMMENT '老师描述',
+  `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active' COMMENT '状态: active(激活), inactive(未激活)',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_teachers_tenant_id` (`tenant_id`),
+  CONSTRAINT `fk_teachers_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='老师表';
+
+-- 5. 课程表 (courses) - 修改为使用teacher_id外键
 CREATE TABLE `courses` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `tenant_id` int(11) NOT NULL COMMENT '所属租户',
+  `teacher_id` int(11) NOT NULL COMMENT '老师ID',
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '课程标题',
-  `teacher` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '老师姓名',
   `schedule_time` datetime NOT NULL COMMENT '课程开始时间',
+  `duration` int(11) NOT NULL DEFAULT '60' COMMENT '课程时长（分钟）',
   `capacity` int(11) NOT NULL DEFAULT '0' COMMENT '课程容量',
+  `type` enum('group','private') COLLATE utf8mb4_unicode_ci DEFAULT 'group' COMMENT '课程类型: group(团课), private(私教)',
+  `description` text COLLATE utf8mb4_unicode_ci COMMENT '课程描述',
+  `location` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '上课地点',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_courses_tenant_id` (`tenant_id`),
   KEY `idx_courses_schedule_time` (`schedule_time`) COMMENT '基于时间的查询和排序',
-  CONSTRAINT `fk_courses_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `fk_courses_teacher_id` (`teacher_id`),
+  CONSTRAINT `fk_courses_tenant_id` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_courses_teacher_id` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='课程表';
 
 -- 5. 会员卡类型表 (member_card_types) - 可扩展：用于后台配置卡类型
@@ -113,11 +135,26 @@ CREATE TABLE `bookings` (
   CONSTRAINT `fk_bookings_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预约记录表';
 
-CREATE TABLE `owners` (
+CREATE TABLE `admins` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `username` VARCHAR(50) NOT NULL UNIQUE,
-  `password` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
+  `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '管理员用户名',
+  `password` VARCHAR(255) NOT NULL COMMENT '加密后的密码',
+  `name` VARCHAR(255) NOT NULL COMMENT '管理员姓名',
+  `role` VARCHAR(20) DEFAULT 'admin' COMMENT '角色',
+  `last_login` DATETIME COMMENT '最后登录时间',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+
+
+-- 插入默认租户/场馆
+INSERT INTO `tenants` (`name`, `invite_code`) VALUES 
+('悦瑜伽馆', 'YUEGA001');
+
+
+-- 初始化管理员 admin / 123
+INSERT INTO `admins` (`username`, `password`, `name`, `role`) VALUES 
+('admin', '$2a$10$XqHEVRgL.9UkQwPpAdyY/.s2IC3LwslKA0bLWcOyGBf0xx3ukjpHy', '系统管理员', 'admin');
+
+

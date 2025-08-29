@@ -1,17 +1,13 @@
 /**
- * 函数式课程模块入口
+ * 老师模块入口
  */
 
 const router = require('./router')
-const miniRouter = require('./mini-router')
-const adminRouter = require('./admin-router')
 const service = require('./service')
 const model = require('./model')
 
 module.exports = {
   router,
-  miniRouter,
-  adminRouter,
   service,
   model
 }
