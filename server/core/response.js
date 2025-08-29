@@ -57,7 +57,7 @@ const handle = (handler) => async (ctx) => {
     }
     
     const errorHandler = errorMap[err.name] || (() => 
-      error(process.env.NODE_ENV === 'development' ? err.message : '服务器内部错误', 500)
+      error(err.message || '服务器内部错误', 500)
     )
     
     ctx.body = errorHandler()
