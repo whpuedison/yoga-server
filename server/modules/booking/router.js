@@ -31,6 +31,22 @@ router.post('/', jwtAuth, handle(async (ctx) => {
 }))
 
 /**
+ * 预约指定课程（小程序端）
+ * POST /api/courses/:courseId/bookings
+ */
+router.post('/courses/:courseId/bookings', jwtAuth, handle(async (ctx) => {
+  const userId = ctx.state.userId
+  const tenantId = ctx.state.tenantId
+  const courseId = ctx.params.courseId
+  const bookingData = {
+    ...ctx.request.body,
+    course_id: courseId
+  }
+  const result = await bookingService.createBooking(userId, tenantId, bookingData)
+  return success(result, '预约成功')
+}))
+
+/**
  * 获取用户预约列表（小程序端）
  * GET /api/bookings
  */

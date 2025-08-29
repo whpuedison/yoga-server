@@ -27,7 +27,8 @@
     "node-cache": "^5.1.2",
     "openai": "^4.87.3",
     "validator": "^6.2.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.0"
