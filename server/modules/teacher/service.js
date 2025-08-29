@@ -130,7 +130,7 @@ const createTeacher = async (tenantId, teacherData) => {
   }
 
   // 返回老师信息
-  return await getTeacherDetail(result.insertId, tenantId)
+  return null
 }
 
 /**
@@ -167,7 +167,7 @@ const updateTeacher = async (teacherId, tenantId, updateData) => {
 }
 
 /**
- * 删除老师
+ * 删除老师（软删除，设置状态为 inactive）
  */
 const deleteTeacher = async (teacherId, tenantId) => {
   // 检查老师是否存在
@@ -176,9 +176,12 @@ const deleteTeacher = async (teacherId, tenantId) => {
     throw BusinessError('老师不存在')
   }
 
-  // TODO: 检查老师是否有关联课程，如果有则不能删除
-
-  await teacherModel.remove(teacherId)
+  // 软删除：更新老师状态为 inactive，保留记录用于课程展示
+  await teacherModel.update(teacherId, { 
+    status: 'inactive',
+    updated_at: getCurrentTime()
+  })
+  
   return true
 }
 

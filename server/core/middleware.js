@@ -101,8 +101,14 @@ const jwtAuth = (type = 'mini-program') => {
       
       // 将用户信息添加到ctx.state
       ctx.state.userId = decoded.userId
-      ctx.state.tenantId = decoded.tenantId
       ctx.state.openid = decoded.openid
+      
+      // 从请求头获取租户ID
+      const tenantId = ctx.headers['x-tenant-id'] || ctx.headers['tenant-id']
+      if (!tenantId && type === 'admin') {
+        ctx.throw(400, '缺少租户ID')
+      }
+      ctx.state.tenantId = tenantId
       
       await next()
     } catch (error) {

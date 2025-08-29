@@ -135,6 +135,7 @@ CREATE TABLE `bookings` (
   CONSTRAINT `fk_bookings_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预约记录表';
 
+-- 管理员
 CREATE TABLE `admins` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `username` VARCHAR(50) NOT NULL UNIQUE COMMENT '管理员用户名',
@@ -146,15 +147,30 @@ CREATE TABLE `admins` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- 创建管理员-租户关联表（多对多关系）
+CREATE TABLE `admin_tenant_relations` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `admin_id` INT NOT NULL COMMENT '管理员ID',
+  `tenant_id` INT NOT NULL COMMENT '租户ID',
+  `is_default` TINYINT(1) DEFAULT 0 COMMENT '是否为默认租户',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `unique_admin_tenant` (`admin_id`, `tenant_id`),
+  FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='管理员-租户关联表';
 
 
 -- 插入默认租户/场馆
 INSERT INTO `tenants` (`name`, `invite_code`) VALUES 
 ('悦瑜伽馆', 'YUEGA001');
 
-
 -- 初始化管理员 admin / 123
 INSERT INTO `admins` (`username`, `password`, `name`, `role`) VALUES 
 ('admin', '$2a$10$XqHEVRgL.9UkQwPpAdyY/.s2IC3LwslKA0bLWcOyGBf0xx3ukjpHy', '系统管理员', 'admin');
+
+-- 假设管理员ID=1，租户ID=1
+INSERT INTO `admin_tenant_relations` (`admin_id`, `tenant_id`, `is_default`) 
+VALUES (1, 1, 1);
 
 

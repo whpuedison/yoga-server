@@ -7,10 +7,10 @@ const { database } = require('../../core')
 const teacherDb = database.createDbOperations('teachers')
 
 /**
- * 根据租户ID查询老师列表
+ * 根据租户ID查询老师列表（只返回活跃状态的老师）
  */
 const findByTenantId = async (tenantId) => {
-  const sql = 'SELECT * FROM teachers WHERE tenant_id = ? ORDER BY created_at DESC'
+  const sql = 'SELECT * FROM teachers WHERE tenant_id = ? AND status = "active" ORDER BY created_at DESC'
   return await teacherDb.query(sql, [tenantId])
 }
 

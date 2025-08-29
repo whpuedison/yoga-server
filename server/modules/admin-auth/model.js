@@ -22,6 +22,20 @@ const updateLastLogin = async (adminId) => {
   return await adminDb.query(sql, [adminId])
 }
 
+/**
+ * 根据管理员ID查询关联的租户列表
+ */
+const findTenantsByAdminId = async (adminId) => {
+  const sql = `
+    SELECT t.*, atr.is_default 
+    FROM admin_tenant_relations atr
+    JOIN tenants t ON atr.tenant_id = t.id
+    WHERE atr.admin_id = ?
+    ORDER BY atr.is_default DESC, t.created_at DESC
+  `
+  return await adminDb.query(sql, [adminId])
+}
+
 // 导出所有管理员模型函数
 module.exports = {
   // 基础CRUD操作
@@ -29,5 +43,6 @@ module.exports = {
   
   // 自定义查询函数
   findByUsername,
-  updateLastLogin
+  updateLastLogin,
+  findTenantsByAdminId
 }

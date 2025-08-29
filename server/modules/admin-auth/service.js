@@ -77,17 +77,30 @@ const adminLogin = async (loginData) => {
   // 更新最后登录时间
   await adminAuthModel.updateLastLogin(admin.id)
 
-  // 生成token
+  // 查询管理员关联的租户列表
+  const tenants = await adminAuthModel.findTenantsByAdminId(admin.id)
+  
+  // 获取默认租户或第一个租户的ID
+  const defaultTenant = tenants.find(tenant => tenant.is_default) || tenants[0]
+  const tenantId = defaultTenant ? defaultTenant.id : null
+
+  // 生成token（不包含租户ID，租户ID通过请求头传递）
   const token = generateAdminToken(admin)
 
-  // 返回登录结果
+  // 返回登录结果，包含租户列表
   return {
     token,
-    user_info: {
+    userInfo: {
       id: admin.id,
       username: admin.username,
       role: admin.role
-    }
+    },
+    tenants: tenants.map(tenant => ({
+      id: tenant.id,
+      name: tenant.name,
+      invite_code: tenant.invite_code,
+      is_default: tenant.is_default === 1 || tenant.is_default === true
+    }))
   }
 }
 
