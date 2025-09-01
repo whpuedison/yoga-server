@@ -43,13 +43,13 @@ const formatTemplateInfo = (template) => ({
   id: template.id,
   name: template.name,
   type: template.type,
-  total_count: template.total_count,
-  valid_days: template.valid_days,
+  totalCount: template.total_count,
+  validDays: template.valid_days,
   price: template.price,
   description: template.description,
-  tenant_id: template.tenant_id,
-  created_at: template.created_at,
-  updated_at: template.updated_at
+  tenantId: template.tenant_id,
+  createdAt: template.created_at,
+  updatedAt: template.updated_at
 })
 
 /**
