@@ -29,7 +29,7 @@ const findByIdAndTenant = async (id, tenantId) => {
 /**
  * 查询课程列表（分页，支持关键词搜索）
  */
-const findCourseList = async ({ tenantId, keyword, teacher, type, startDate, endDate, offset = 0, limit = 10 }) => {
+const findCourseList = async ({ tenantId, keyword, teacherId, type, startDate, endDate, offset = 0, limit = 10 }) => {
   let whereClause = 'WHERE tenant_id = ?'
   const params = [tenantId]
 
@@ -39,9 +39,9 @@ const findCourseList = async ({ tenantId, keyword, teacher, type, startDate, end
     params.push(keywordPattern, keywordPattern)
   }
 
-  if (teacher) {
-    whereClause += ' AND teacher = ?'
-    params.push(teacher)
+  if (teacherId) {
+    whereClause += ' AND teacher_id = ?'
+    params.push(teacherId)
   }
 
   if (type) {
@@ -61,7 +61,7 @@ const findCourseList = async ({ tenantId, keyword, teacher, type, startDate, end
 
   // 查询数据
   const dataSql = `
-    SELECT id, title, teacher, schedule_time, duration, capacity, booked_count, type, description, location
+    SELECT id, title, teacher_id, schedule_time, duration, capacity, booked_count, type, description, location
     FROM courses 
     ${whereClause} 
     ORDER BY schedule_time DESC 

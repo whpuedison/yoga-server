@@ -23,7 +23,7 @@ router.get('/', adminAuth, handle(async (ctx) => {
     page: ctx.query.page,
     size: ctx.query.size,
     keyword: ctx.query.keyword,
-    teacher: ctx.query.teacher,
+    teacherId: ctx.query.teacher_id,
     type: ctx.query.type,
     start_date: ctx.query.start_date,
     end_date: ctx.query.end_date

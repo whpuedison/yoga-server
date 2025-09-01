@@ -100,10 +100,10 @@ const getCourseList = async (tenantId, options = {}) => {
   const result = await courseModel.findCourseList({
     tenantId,
     keyword: options.keyword,
-    teacher: options.teacher,
+    teacherId: options.teacherId,
     type: options.type,
-    startDate: options.start_date,
-    endDate: options.end_date,
+    startDate: options.startDate,
+    endDate: options.endDate,
     offset,
     limit: size
   })

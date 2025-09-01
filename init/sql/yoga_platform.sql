@@ -66,6 +66,7 @@ CREATE TABLE `courses` (
   `type` enum('group','private') COLLATE utf8mb4_unicode_ci DEFAULT 'group' COMMENT '课程类型: group(团课), private(私教)',
   `description` text COLLATE utf8mb4_unicode_ci COMMENT '课程描述',
   `location` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '上课地点',
+  `booked_count` int(11) NOT NULL COMMENT '预约人数',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
