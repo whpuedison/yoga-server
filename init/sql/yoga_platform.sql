@@ -84,6 +84,8 @@ CREATE TABLE `member_card_types` (
   `type` enum('count','period') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '类型: count(次卡), period(期限卡)',
   `total_count` int(11) DEFAULT NULL COMMENT '总次数（次卡专用）',
   `valid_days` int(11) NOT NULL COMMENT '有效天数',
+  `price` DECIMAL(10,2) DEFAULT NULL COMMENT '价格',
+  `description` text COLLATE utf8mb4_unicode_ci COMMENT '会员卡描述',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

@@ -1,12 +1,11 @@
 /**
- * 函数式会员卡业务服务
+ * 会员卡模板业务服务
  */
 const { validator, errors, utils, database } = require('../../core')
-const memberCardModel = require('./model')
-const userModel = require('../../modules/user/model')
+const templateModel = require('./model')
 
 const { 
-  validate, required, custom 
+  validate, required, length, custom 
 } = validator
 
 const { 
@@ -20,199 +19,93 @@ const {
 const { getPagination } = database
 
 /**
- * 会员卡数据验证规则
+ * 会员卡模板数据验证规则
  */
-const validateMemberCardCreate = (cardData) => 
+const validateTemplateCreate = (templateData) => 
   validate(
-    cardData,
-    required('user_id', '用户ID不能为空'),
-    required('type_id', '卡类型ID不能为空')
+    templateData,
+    required('name', '模板名称不能为空'),
+    length('name', 1, 100, '模板名称长度应在1-100字符之间'),
+    required('type', '卡类型不能为空'),
+    custom('type', (value) => ['count', 'period'].includes(value), '卡类型必须是count或period'),
+    required('total_count', '总次数不能为空'),
+    custom('total_count', (value) => value > 0, '总次数必须大于0'),
+    required('valid_days', '有效天数不能为空'),
+    custom('valid_days', (value) => value > 0, '有效天数必须大于0'),
+    required('price', '价格不能为空'),
+    custom('price', (value) => value >= 0, '价格不能为负数')
   )
 
 /**
- * 格式化会员卡信息
+ * 格式化会员卡模板信息
  */
-const formatMemberCardInfo = (card) => ({
-  id: card.id,
-  user_id: card.user_id,
-  tenant_id: card.tenant_id,
-  type_id: card.type_id,
-  type: card.type,
-  total_count: card.total_count,
-  used_count: card.used_count,
-  remaining_count: card.remaining_count,
-  frozen_count: card.frozen_count,
-  valid_days: card.valid_days,
-  activated_at: card.activated_at,
-  expires_at: card.expires_at,
-  status: card.status,
-  created_at: card.created_at,
-  updated_at: card.updated_at,
-  // 关联信息
-  user_nickname: card.nickname,
-  user_avatar: card.avatar_url,
-  template_name: card.template_name
+const formatTemplateInfo = (template) => ({
+  id: template.id,
+  name: template.name,
+  type: template.type,
+  total_count: template.total_count,
+  valid_days: template.valid_days,
+  price: template.price,
+  description: template.description,
+  tenant_id: template.tenant_id,
+  created_at: template.created_at,
+  updated_at: template.updated_at
 })
-
-/**
- * 检查会员卡创建条件
- */
-const checkMemberCardConditions = async (userId, typeId, tenantId) => {
-  // 检查用户是否存在
-  const user = await userModel.findById(userId)
-  if (!user) {
-    throw BusinessError('用户不存在')
-  }
-
-  // 检查用户是否属于该租户
-  // 这里需要实现用户-租户关联检查
-  // 暂时跳过，实际项目中需要验证
-
-  // 检查卡类型是否存在
-  // 这里需要实现卡类型检查
-  // 暂时跳过，实际项目中需要验证
-
-  return true
-}
 
 /**
  * 业务逻辑函数
  */
 
 /**
- * 获取会员卡列表
+ * 获取会员卡模板列表
  */
-const getMemberCardList = async (tenantId, options = {}) => {
-  const { page, size, offset } = getPagination(options.page, options.size)
-  
-  const result = await memberCardModel.findMemberCardList({
-    tenantId,
-    userId: options.user_id,
-    status: options.status,
-    type: options.type,
-    offset,
-    limit: size
-  })
-  
-  return {
-    list: result.list.map(formatMemberCardInfo),
-    total: result.total,
-    page,
-    size
-  }
+const getTemplateList = async (tenantId) => {
+  const templates = await templateModel.findByTenantId(tenantId)
+  return templates.map(formatTemplateInfo)
 }
 
 /**
- * 获取会员卡详情
+ * 获取会员卡模板详情
  */
-const getMemberCardDetail = async (cardId, tenantId) => {
-  const card = await memberCardModel.findByIdAndTenant(cardId, tenantId)
-  if (!card) {
-    throw BusinessError('会员卡不存在')
+const getTemplateDetail = async (templateId, tenantId) => {
+  const template = await templateModel.findByIdAndTenant(templateId, tenantId)
+  if (!template) {
+    throw BusinessError('会员卡模板不存在')
   }
   
-  return formatMemberCardInfo(card)
+  return formatTemplateInfo(template)
 }
 
 /**
- * 获取用户会员卡列表
+ * 创建会员卡模板
  */
-const getUserMemberCards = async (userId, tenantId) => {
-  const cards = await memberCardModel.findByUserId(userId, tenantId)
-  return cards.map(formatMemberCardInfo)
-}
-
-/**
- * 创建会员卡
- */
-const createMemberCard = async (tenantId, cardData) => {
+const createTemplate = async (tenantId, templateData) => {
   // 数据验证
-  validateMemberCardCreate(cardData)
+  validateTemplateCreate(templateData)
 
-  const { user_id, type_id } = cardData
-
-  // 检查创建条件
-  await checkMemberCardConditions(user_id, type_id, tenantId)
-
-  // 创建会员卡数据
-  // 这里需要根据卡类型获取默认值
-  const cardCreateData = {
-    user_id: user_id,
+  // 创建模板数据
+  const templateCreateData = {
+    ...templateData,
     tenant_id: tenantId,
-    type_id: type_id,
-    type: 'count', // 默认类型，实际应从卡类型表获取
-    total_count: 30, // 默认值，实际应从卡类型表获取
-    remaining_count: 30, // 默认值
-    used_count: 0,
-    frozen_count: 0,
-    valid_days: 180, // 默认值，实际应从卡类型表获取
-    status: 'inactive',
     created_at: getCurrentTime(),
     updated_at: getCurrentTime()
   }
 
-  const result = await memberCardModel.create(cardCreateData)
+  const result = await templateModel.create(templateCreateData)
   
   if (!result.insertId) {
-    throw BusinessError('会员卡创建失败')
+    throw BusinessError('会员卡模板创建失败')
   }
 
-  // 返回会员卡信息
-  return await getMemberCardDetail(result.insertId, tenantId)
-}
-
-/**
- * 激活会员卡
- */
-const activateMemberCard = async (cardId, tenantId) => {
-  const card = await memberCardModel.findByIdAndTenant(cardId, tenantId)
-  if (!card) {
-    throw BusinessError('会员卡不存在')
-  }
-
-  if (card.status !== 'inactive') {
-    throw BusinessError('只能激活未激活的会员卡')
-  }
-
-  await memberCardModel.activateCard(cardId)
-  return await getMemberCardDetail(cardId, tenantId)
-}
-
-/**
- * 冻结会员卡次数
- */
-const freezeCardCount = async (cardId, count) => {
-  await memberCardModel.updateFrozenCount(cardId, count)
-  return true
-}
-
-/**
- * 解冻会员卡次数
- */
-const unfreezeCardCount = async (cardId, count) => {
-  await memberCardModel.updateFrozenCount(cardId, -count)
-  return true
-}
-
-/**
- * 使用会员卡次数
- */
-const useCardCount = async (cardId, count) => {
-  await memberCardModel.updateRemainingCount(cardId, -count)
-  await memberCardModel.updateUsedCount(cardId, count)
-  return true
+  // 返回模板信息
+  return await getTemplateDetail(result.insertId, tenantId)
 }
 
 module.exports = {
-  getMemberCardList,
-  getMemberCardDetail,
-  getUserMemberCards,
-  createMemberCard,
-  activateMemberCard,
-  freezeCardCount,
-  unfreezeCardCount,
-  useCardCount,
+  getTemplateList,
+  getTemplateDetail,
+  createTemplate,
   
   // 导出验证函数供其他模块使用
-  validateMemberCardCreate
+  validateTemplateCreate
 }

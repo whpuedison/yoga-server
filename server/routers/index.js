@@ -14,7 +14,6 @@ const teacherRouter = require('../modules/teacher').router
 const bookingRouter = require('../modules/booking').router
 const memberCardRouter = require('../modules/member-card').router
 const adminAuthRouter = require('../modules/admin-auth').router
-const memberCardTemplateRouter = require('../modules/member-card-template').router
 
 // API路由 (v1版本)
 router.use('/api/v1/user', userRouter.routes(), userRouter.allowedMethods())
@@ -23,8 +22,7 @@ router.use('/api/v1/auth', authRouter.routes(), authRouter.allowedMethods())
 router.use('/api/v1/admin/auth', adminAuthRouter.routes(), adminAuthRouter.allowedMethods())
 router.use('/api/v1/courses', courseMiniRouter.routes(), courseMiniRouter.allowedMethods())
 router.use('/api/v1/bookings', bookingRouter.routes(), bookingRouter.allowedMethods())
-router.use('/api/v1/member-cards', memberCardRouter.routes(), memberCardRouter.allowedMethods())
-router.use('/api/v1/admin/member-card-templates', memberCardTemplateRouter.routes(), memberCardTemplateRouter.allowedMethods())
+router.use('/api/v1/member-card', memberCardRouter.routes(), memberCardRouter.allowedMethods())
 router.use('/api/v1/admin/courses', courseAdminRouter.routes(), courseAdminRouter.allowedMethods())
 router.use('/api/v1/admin/teachers', teacherRouter.routes(), teacherRouter.allowedMethods())
 

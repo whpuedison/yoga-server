@@ -1,5 +1,5 @@
 /**
- * 函数式会员卡模块入口
+ * 会员卡模板模块入口
  */
 
 const router = require('./router')
